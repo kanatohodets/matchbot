@@ -1,6 +1,7 @@
 package Spring::LobbyClient;
 use Mojo::Base 'Mojo::EventEmitter';
 use Mojo::IOLoop;
+use Mojo::JSON qw(encode_json decode_json);
 use MIME::Base64;
 use Digest::MD5 qw(md5);
 use Data::Dumper qw(Dumper);
@@ -24,8 +25,8 @@ sub new {
 	return $self;
 }
 sub connect {
-	my $self = shift;
-	my $connection_details = shift;
+	my ($self, $connection_details, $cb) = @_;
+
 	my $reconnect = sub {
 		Mojo::IOLoop->timer(5 => sub {
 			$self->connect($connection_details);
@@ -61,17 +62,49 @@ sub connect {
 
 		$stream->start;
 		$self->_start_keepalive;
-		$self->login('FooUser', 'foobar');
+		my ($user, $pass) = @{$connection_details}{qw(user pass)};
+		$self->login($user, $pass, $cb);
 	})
 
 }
 
 sub login {
 	my $self = shift;
-	my ($username, $password) = @_;
+	my ($username, $password, $cb) = @_;
 	my $pw = encode_base64(md5($password));
 	chomp($pw);
 	$self->_write("LOGIN", $username, $password, 3200, "198.162.1.13", "PerlBot 0.01", 0, "sp cl p");
+	$self->once(accepted => $cb);
+}
+
+sub open_queue {
+	my ($self, $queue) = @_;
+	$self->_write("OPENQUEUE", encode_json($queue));
+}
+
+sub connect_user {
+	my ($self, $user) = @_;
+	$self->_write('CONNECTUSER', encode_json($user));
+}
+
+sub close_queue {
+	my ($self, $queue) = @_;
+	$self->_write('CLOSEQUEUE', encode_json({ name => $queue }));
+}
+
+sub join_queue_accept {
+	my ($self, $queue, $users) = @_;
+	$self->_write('JOINQUEUEACCEPT', encode_json({ name => $queue, userNames => $users }));
+}
+
+sub ready_check {
+	my ($self, $queue, $users) = @_;
+	$self->_write('READYCHECK', encode_json({ name => $queue, userNames => $users, responseTime => 5 }));
+}
+
+#TODO
+sub ready_check_result {
+
 }
 
 sub _read {
