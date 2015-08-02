@@ -1,4 +1,4 @@
-package Matchbot::Client;
+package Spring::LobbyClient;
 use Mojo::Base 'Mojo::EventEmitter';
 use Mojo::IOLoop;
 use MIME::Base64;
@@ -7,11 +7,9 @@ use Data::Dumper qw(Dumper);
 
 use v5.18.2;
 
-use Matchbot::Protocol qw(parse_message prepare_message);;
+use Spring::LobbyProtocol qw(parse_message prepare_message);;
 
 use constant DEBUG => $ENV{MATCHBOT_DEBUG} ? 1 : 0;
-
-has _response_handlers => sub { {} };
 
 sub new {
 	my $self = shift->SUPER::new(@_);
@@ -21,7 +19,6 @@ sub new {
 		my ($command, $id, $data) = @_;
 		# re-emit as a unique event
 		$self->emit(lc $command, $id, $data);
-		$self->_handle_response($command, $id, $data);
 	});
 
 	return $self;
@@ -64,16 +61,17 @@ sub connect {
 
 		$stream->start;
 		$self->_start_keepalive;
-		$self->login;
+		$self->login('FooUser', 'foobar');
 	})
 
 }
 
 sub login {
 	my $self = shift;
-	my $pw = encode_base64(md5('foobar'));
+	my ($username, $password) = @_;
+	my $pw = encode_base64(md5($password));
 	chomp($pw);
-	$self->_write("LOGIN", "FooUser", $pw, 3200, "198.162.1.13", "PerlBot 0.01", 0, "sp cl p");
+	$self->_write("LOGIN", $username, $password, 3200, "198.162.1.13", "PerlBot 0.01", 0, "sp cl p");
 }
 
 sub _read {
@@ -95,33 +93,12 @@ sub _read {
 	}
 }
 
-sub _handle_response {
-	my ($self, $command, $id, $data) = @_;
-	my $command_handlers = $self->{response_handlers}->{$command};
-	# yes, autoviv. all commands will have an empty hash at least.
-	if (exists $command_handlers->{$id}) {
-		my $handler = $command_handlers->{$id};
-		$self->$handler->($command, $id, $data);
-	}
-}
-
 sub _write {
 	my ($self, $command, @params) = @_;
-
-	my $response_handler;
-	if (ref $params[$#params] eq 'CODE') {
-		$response_handler = pop @params;
-	}
 
 	# max ID is 2147483647; with ping every 5 seconds that's 340 years.
 	# probably fine to not check for overflow...
 	my $id = $self->{msg_ids}->{$command}++;
-
-	# writer wanted a cb to ping on response
-	if ($response_handler) {
-		say "registering a response handler for $command with id $id";
-		$self->{response_handlers}->{$command}->{$id} = $response_handler;
-	}
 
 	my $message = prepare_message($command, $id, @params);
 	warn "Client: sending $message" if DEBUG;

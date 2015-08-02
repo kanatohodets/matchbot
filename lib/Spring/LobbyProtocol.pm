@@ -1,4 +1,4 @@
-package Matchbot::Protocol;
+package Spring::LobbyProtocol;
 use Mojo::Base -base;
 use Exporter 'import';
 use Data::Dumper qw(Dumper);
