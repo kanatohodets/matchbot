@@ -9,6 +9,7 @@ sub start {
 	my $self = shift;
 	$self->client->on(joinqueuerequest => sub {
 		my ($self, $id, $data) = @_;
+		$self->add_users_to_queue($data);
 	});
 
 	$self->client->on(queueleft => sub {
@@ -22,6 +23,10 @@ sub start {
 	$self->client->on(removeuser => sub {
 		my ($self, $id, $data) = @_;
 	});
+}
+
+sub add_users_to_queue {
+	my ($self, $users) = @_;
 }
 
 sub open {
