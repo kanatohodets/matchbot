@@ -1,4 +1,5 @@
 package Matchbot::MockQueues;
+use Mojo::JSON;
 
 sub get_queues {
   return [
@@ -11,7 +12,7 @@ sub get_queues {
       description => "TACTICS",
       minPlayers => 10,
       maxPlayers => 30,
-      teamJoinAllowed => JSON::PP::true
+      teamJoinAllowed => Mojo::JSON->true
     },
     {
       name => "BADSD1",
@@ -22,7 +23,7 @@ sub get_queues {
       description => "Join the grind",
       minPlayers => 10,
       maxPlayers => 30,
-      teamJoinAllowed => JSON::PP::true
+      teamJoinAllowed => Mojo::JSON->true
     },
     {
       name => "BADSD2",
@@ -33,7 +34,7 @@ sub get_queues {
       description => "Join the grind",
       minPlayers => 10,
       maxPlayers => 30,
-      teamJoinAllowed => JSON::PP::true
+      teamJoinAllowed => Mojo::JSON->true
     },
     {
       name => "CURSED",
@@ -44,7 +45,7 @@ sub get_queues {
       description => "Join the grind",
       minPlayers => 10,
       maxPlayers => 30,
-      teamJoinAllowed => JSON::PP::true
+      teamJoinAllowed => Mojo::JSON->true
     },
     {
       name => "EVONORMAL",
@@ -55,7 +56,7 @@ sub get_queues {
       description => "Join the grind",
       minPlayers => 10,
       maxPlayers => 30,
-      teamJoinAllowed => JSON::PP::true
+      teamJoinAllowed => Mojo::JSON->true
     },
     {
       name => "MYGAME",
@@ -66,7 +67,7 @@ sub get_queues {
       description => "Join the grind",
       minPlayers => 10,
       maxPlayers => 30,
-      teamJoinAllowed => JSON::PP::true
+      teamJoinAllowed => Mojo::JSON->true
     },
     {
       name => "MANYGAMES",
@@ -77,7 +78,7 @@ sub get_queues {
       description => "Join the grind",
       minPlayers => 10,
       maxPlayers => 30,
-      teamJoinAllowed => JSON::PP::true
+      teamJoinAllowed => Mojo::JSON->true
     }
   ];
 }
