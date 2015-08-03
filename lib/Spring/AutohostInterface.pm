@@ -3,6 +3,8 @@ use Mojo::Base -strict;
 use Mojo::IOLoop;
 use IO::Socket::IP;
 
+use constant DEBUG => $ENV{MATCHBOT_DEBUG} ? 1 : 0;
+
 sub new {
 	my ($self) = shift->SUPER::new(@_);
 	my $spring_port = shift;
@@ -25,12 +27,14 @@ sub new {
 			# read up to one byte more than max UDP packet size for IPv4
 			$sock->recv(my $buffer, 65_508, 0);
 			if ($buffer) {
+				warn "autohost <<< $message\n" if DEBUG;
 				$self->parse_message($buffer);
 			}
 		}
 
 		if ($writable && @{$self->{send_buffer}}) {
 			my $message = pop @{$self->{send_buffer}};
+			warn "autohost >>> $message\n" if DEBUG;
 			$sock->send($message, 0);
 		}
 	});
