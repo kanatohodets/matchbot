@@ -12,12 +12,23 @@ use Spring::LobbyProtocol qw(parse_message prepare_message);;
 
 use constant DEBUG => $ENV{MATCHBOT_DEBUG} ? 1 : 0;
 
+my %json_commands = map { $_ => 1 } qw(
+	JOINQUEUEREQUEST
+	QUEUELEFT
+	READYCHECKRESPONSE
+	OPENQUEUE
+	REMOVEUSER
+);
+
 sub new {
 	my $self = shift->SUPER::new(@_);
 
 	$self->on(message => sub {
 		my $self = shift;
 		my ($command, $id, $data) = @_;
+		if ($json_commands{$command}) {
+			$data = decode_json($data->[0]);
+		}
 		# re-emit as a unique event
 		$self->emit(lc $command, $id, $data);
 	});
