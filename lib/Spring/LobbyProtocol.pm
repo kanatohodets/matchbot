@@ -28,7 +28,7 @@ sub parse_message {
 		# remaining bits of the message
 		$message =~ s/^([A-Z]+) ?//;
 		my $command = $1;
-		
+
 		if (!exists $commands->{$command}) {
 			push @receipt_order, $command;
 		}
@@ -52,7 +52,12 @@ sub prepare_message {
 	my @params = @_;
 
 	my $param_string = '';
-	for my $param (@params) {
+	my @defined_params = grep { defined $_ } @params;
+	if (scalar @defined_params < scalar @params) {
+		warn "undef params passed to prepare_message. here are the others: " .
+			join(', ', @defined_params) . "\n";
+	}
+	for my $param (@defined_params) {
 		if ($param =~ /\t/) {
 			$param =~ s/\t/  /g;
 		}
@@ -68,9 +73,12 @@ sub prepare_message {
 
 	# trim off any trailing spaces/tabs
 	$param_string =~ s/\s+$//g;
+	# trim any extra leading whitespace (so it is always a single space, as in
+	# the sprintf template)
+	$param_string =~ s/^\s+//g;
 
 	say "wtf no id?? $command $param_string" if !defined $id;
-	my $message = sprintf("#%s %s%s\n", $id, $command, $param_string);
+	my $message = sprintf("#%s %s %s\n", $id, $command, $param_string);
 	return $message;
 }
 

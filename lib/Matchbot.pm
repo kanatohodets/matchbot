@@ -2,10 +2,15 @@ package Matchbot;
 use Mojo::Base 'Mojolicious';
 use Spring::LobbyClient;
 use Matchbot::MockQueues;
+use Matchbot::QueueManager;
 
-has queues => sub { {} };
-has games => sub { {} };
-has 'client' => sub { state $client = Spring::LobbyClient->new() };
+has 'queue';
+has client => sub { state $client = Spring::LobbyClient->new() };
+has queue => sub {
+	state $queue = Matchbot::QueueManager->new({
+		client => shift->client
+	});
+};
 
 # This method will run once at server start
 sub startup {
@@ -13,15 +18,14 @@ sub startup {
 	my $conn = {
 		address => 'localhost',
 		port => 8200,
-		user => 'FooUser',
+		username => 'FooUser',
 		password => "foobar"
 	};
 
+	my $queues = Matchbot::MockQueues::get_queues();
 	$self->client->connect($conn => sub {
-		my $queues = Matchbot::MockQueues::get_queues();
-		for my $queue (@$queues) {
-			$self->client->open_queue($queue);
-		}
+		$self->queue->start;
+		$self->queue->open($queues);
 	});
 }
 

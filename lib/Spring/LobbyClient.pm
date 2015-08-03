@@ -29,7 +29,7 @@ sub connect {
 
 	my $reconnect = sub {
 		Mojo::IOLoop->timer(5 => sub {
-			$self->connect($connection_details);
+			$self->connect($connection_details, $cb);
 		});
 	};
 
@@ -62,7 +62,7 @@ sub connect {
 
 		$stream->start;
 		$self->_start_keepalive;
-		my ($user, $pass) = @{$connection_details}{qw(user pass)};
+		my ($user, $pass) = @{$connection_details}{qw(username password)};
 		$self->login($user, $pass, $cb);
 	})
 
@@ -71,10 +71,10 @@ sub connect {
 sub login {
 	my $self = shift;
 	my ($username, $password, $cb) = @_;
-	my $pw = encode_base64(md5($password));
-	chomp($pw);
-	$self->_write("LOGIN", $username, $password, 3200, "198.162.1.13", "PerlBot 0.01", 0, "sp cl p");
-	$self->once(accepted => $cb);
+	my $encoded_pw = encode_base64(md5($password));
+	chomp($encoded_pw);
+	$self->_write("LOGIN", $username, $encoded_pw, 3200, "198.162.1.13", "PerlBot 0.01", 0, "sp cl p");
+	$self->once(logininfoend => $cb);
 }
 
 sub open_queue {
@@ -109,6 +109,7 @@ sub ready_check_result {
 
 sub _read {
 	my ($self, $stream, $bytes) = @_;
+	warn "Client <<< $bytes\n" if DEBUG;
 	my @commands = parse_message($bytes);
 	# assumes commands can't be interleaved.
 	# e.g.
@@ -134,7 +135,7 @@ sub _write {
 	my $id = $self->{msg_ids}->{$command}++;
 
 	my $message = prepare_message($command, $id, @params);
-	warn "Client: sending $message" if DEBUG;
+	warn "Client >>> $message" if DEBUG;
 	$self->{stream}->write($message);
 }
 
