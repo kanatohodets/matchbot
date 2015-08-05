@@ -1,5 +1,5 @@
 package Spring::LobbyProtocol;
-use Mojo::Base -base;
+use Mojo::Base -strict;
 use Exporter 'import';
 use Data::Dumper qw(Dumper);
 use 5.18.2;
@@ -77,7 +77,6 @@ sub prepare_message {
 	# the sprintf template)
 	$param_string =~ s/^\s+//g;
 
-	say "wtf no id?? $command $param_string" if !defined $id;
 	my $message = sprintf("#%s %s %s\n", $id, $command, $param_string);
 	return $message;
 }

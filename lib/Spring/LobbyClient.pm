@@ -17,7 +17,6 @@ my %json_commands = map { $_ => 1 } qw(
 	QUEUELEFT
 	READYCHECKRESPONSE
 	OPENQUEUE
-	REMOVEUSER
 );
 
 sub new {
@@ -26,8 +25,15 @@ sub new {
 	$self->on(message => sub {
 		my $self = shift;
 		my ($command, $id, $data) = @_;
+		# assuming that json commands only have one chunk of data
 		if ($json_commands{$command}) {
-			$data = decode_json($data->[0]);
+			eval {
+				$data = decode_json($data->[0]);
+				1;
+			} or do {
+				my $err = $@ || 'zombie error';
+				warn "$command arguments were not valid JSON: $@" . Dumper($data) . "\n";
+			}
 		}
 		# re-emit as a unique event
 		$self->emit(lc $command, $id, $data);
@@ -73,18 +79,18 @@ sub connect {
 
 		$stream->start;
 		$self->_start_keepalive;
-		my ($user, $pass) = @{$connection_details}{qw(username password)};
-		$self->login($user, $pass, $cb);
+		$self->login($connection_details, $cb);
 	})
 
 }
 
 sub login {
 	my $self = shift;
-	my ($username, $password, $cb) = @_;
-	my $encoded_pw = encode_base64(md5($password));
+	my ($conn, $cb) = @_;
+	my ($user, $pass) = @{$conn}{qw(username password)};
+	my $encoded_pw = encode_base64(md5($pass));
 	chomp($encoded_pw);
-	$self->_write("LOGIN", $username, $encoded_pw, 3200, "198.162.1.13", "PerlBot 0.01", 0, "sp cl p");
+	$self->_write("LOGIN", $user, $encoded_pw, 3200, '*', "Matchbot", 0, "sp cl p");
 	$self->once(logininfoend => $cb);
 }
 
@@ -109,13 +115,13 @@ sub join_queue_accept {
 }
 
 sub ready_check {
-	my ($self, $queue, $users) = @_;
+	my ($self, $queue, $users, $response_time) = @_;
 	$self->_write('READYCHECK', encode_json({ name => $queue, userNames => $users, responseTime => 5 }));
 }
 
-#TODO
 sub ready_check_result {
-
+	my ($self, $queue, $users, $result) = @_;
+	$self->_write('READYCHECKRESULT', encode_json({ name => $queue, userNames => $users, result => $result }));
 }
 
 sub _read {
