@@ -3,24 +3,22 @@ use Mojo::Base 'Mojolicious';
 use Spring::LobbyClient;
 use Matchbot::MockQueues;
 use Matchbot::QueueManager;
+use Mojolicious::Plugin::Config;
 
 has 'queue';
 has client => sub { state $client = Spring::LobbyClient->new() };
 has queue => sub {
+	my $self = shift;
 	state $queue = Matchbot::QueueManager->new({
-		client => shift->client
+		app => $self
 	});
 };
 
-# This method will run once at server start
 sub startup {
 	my $self = shift;
-	my $conn = {
-		address => 'localhost',
-		port => 8200,
-		username => 'FooUser',
-		password => "foobar"
-	};
+	$self->plugin('Config');
+
+	my $conn = $self->config->{connection};
 
 	my $queues = Matchbot::MockQueues::get_queues();
 	$self->client->connect($conn => sub {
