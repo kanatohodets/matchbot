@@ -16,7 +16,11 @@ has queue => sub {
 
 sub startup {
 	my $self = shift;
-	$self->plugin('Config');
+	my $given_conf = $ARGV[-1] // '';
+	my $conf_file = 'matchbot.conf';
+	$conf_file = $given_conf if $given_conf && -r $given_conf;
+
+	$self->plugin(Config => { file => $conf_file });
 
 	my $conn = $self->config->{connection};
 
