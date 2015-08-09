@@ -13,8 +13,8 @@ sub find_queue_matches {
 	#TODO: smart matching logic, extensibility so its easy to write new
 	#matching algos, whatever.
 	my @players = keys %{$queue->{players}};
-	my @game_pool = @{$queue->{gameNames}};
-	my @map_pool = @{$queue->{mapNames}};
+	my @game_pool = @{$queue->{details}->{gameNames}};
+	my @map_pool = @{$queue->{details}->{mapNames}};
 	#just 1v1 for now
 	while (@players) {
 		my ($one, $two) = (shift @players, shift @players);
