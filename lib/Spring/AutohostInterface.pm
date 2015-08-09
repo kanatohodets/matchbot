@@ -1,33 +1,35 @@
 package Spring::AutohostInterface;
-use Mojo::Base -strict;
+use Mojo::Base 'Mojo::EventEmitter';
 use Mojo::IOLoop;
-use IO::Socket::IP;
+use IO::Socket::INET;
 
 use constant DEBUG => $ENV{MATCHBOT_DEBUG} ? 1 : 0;
 
-sub new {
-	my ($self) = shift->SUPER::new(@_);
-	my $spring_port = shift;
-	$self->{sock} = IO::Socket::IP->new(
+has port => sub {
+	my $self = shift;
+	return $self->sock->sockport;
+};
+
+has sock => sub {
+	state $sock = IO::Socket::INET->new(
 		PeerAddr => '127.0.0.1',
-		PeerPort => $spring_port,
 		Proto => 'udp',
 		Blocking => 0
-	);
+	) or die "could not bind autohost interface port: $!";
+};
 
-	if (!$self->{sock}) {
-		die "could not bind autohost interface port: $!";
-	}
+sub new {
+	my ($self) = shift->SUPER::new(@_);
 
 	$self->{send_buffer} = [];
 
-	Mojo::IOLoop->singleton->reactor->io($sock => sub {
+	Mojo::IOLoop->singleton->reactor->io($self->sock => sub {
 		my ($readable, $writable) = @_;
 		if ($readable) {
 			# read up to one byte more than max UDP packet size for IPv4
-			$sock->recv(my $buffer, 65_508, 0);
+			$self->sock->recv(my $buffer, 65_508, 0);
 			if ($buffer) {
-				warn "autohost <<< $message\n" if DEBUG;
+				warn "autohost <<< $buffer\n" if DEBUG;
 				$self->parse_message($buffer);
 			}
 		}
@@ -35,7 +37,7 @@ sub new {
 		if ($writable && @{$self->{send_buffer}}) {
 			my $message = pop @{$self->{send_buffer}};
 			warn "autohost >>> $message\n" if DEBUG;
-			$sock->send($message, 0);
+			$self->sock->send($message, 0);
 		}
 	});
 
