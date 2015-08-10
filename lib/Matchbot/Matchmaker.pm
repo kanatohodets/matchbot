@@ -2,15 +2,10 @@ package Matchbot::Matchmaker;
 use Mojo::Base -strict;
 use Exporter 'import';
 use List::Util qw(shuffle);
-use Data::Dumper qw(Dumper);
+use Matchmaker::Util qw(generate_password);
 use 5.18.2;
 
 our @EXPORT_OK = qw(find_queue_matches);
-
-sub generate_user_password {
-	my @corpus = ('a' .. 'z', 'A' .. 'Z', 0 .. 9, qw|! @ $ % ^ & * ( )|);
-	return join '', (shuffle @corpus)[0 .. 8];
-}
 
 sub generate_1v1s {
     my ($players, $map_pool, $game_pool) = @_;
@@ -30,11 +25,11 @@ sub generate_1v1s {
 				player => {
                     0 => {
                         name => $one,
-                        password => generate_user_password(),
+                        password => generate_password(),
                     },
                     1 => {
                         name => $two,
-                        password => generate_user_password(),
+                        password => generate_password(),
                     }
                 },
                 team => {
