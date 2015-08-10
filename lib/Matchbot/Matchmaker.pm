@@ -21,6 +21,8 @@ sub generate_1v1s {
 		if (defined $one && defined $two) {
 			my $map = (shuffle @$map_pool)[0];
 			my $game = (shuffle @$game_pool)[0];
+			# TODO: something to translate a more human datastructure into
+			# an AST for the startscript, instead of basically writing it out.
 			push @matches, {
 				status => 'readycheck',
 				map => $map,
@@ -52,11 +54,11 @@ sub generate_1v1s {
 
 sub find_queue_matches {
 	my $queue = shift;
-	my @matches;
 	#TODO: smart matching logic, extensibility so its easy to write new
 	#matching algos, whatever.
 	my @players = keys %{$queue->{players}};
     my $details = $queue->{details};
+
     # just 1v1 for now
     my @matches = generate_1v1s(\@players, $details->{gameNames}, $details->{mapNames});
 	return @matches;
