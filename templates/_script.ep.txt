@@ -1,41 +1,18 @@
-% my ($d) = shift;
 [game]
 {
-	[allyteam0]
-	{
-		numallies=0;
-	}
-	[allyteam1]
-	{
-		numallies=0;
-	}
-	[modoptions]
-	{
-		maxspeed=20;
-	}
-	[player0]
-	{
-		name=[S44]Nemo2;
-		team=0;
-	}
-	[player1]
-	{
-		name=Enemy;
-		team=1;
-	}
-	[team0]
-	{
-		allyteam=0;
-		teamleader=0;
-	}
-	[team1]
-	{
-		allyteam=1;
-		teamleader=1;
-	}
-	gametype=IngameLobby v0.1;
-	ishost=1;
-	mapname=Sea of Dunes v1.1;
-	myplayername=[S44]Nemo2;
-	nohelperais=0;
+% # only one level of nesting
+% my ($d) = shift;
+% for my $key (sort keys %$d) {
+    % my $top_val = $d->{$key};
+    % if (ref $top_val eq 'HASH') {
+    [<%= $key %>]
+    {
+        % for my $inner (sort keys %$top_val) {
+        <%= $inner %>=<%= $top_val->{$inner} %>;
+        %}
+    }
+    % } else {
+    <%= $key %>=<%= $top_val %>;
+    % }
+% }
 }

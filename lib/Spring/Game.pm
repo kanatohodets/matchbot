@@ -37,8 +37,8 @@ has 'dir' => sub {
 	return $self->root_dir . "/" . time;
 };
 
-sub new {
-	my $self = shift->SUPER::new(@_);
+sub start {
+	my $self = shift;
 	$self->process->on(error => sub {
 		my ($fork, $err) = @_;
 		my $dir = $self->dir;
@@ -69,22 +69,35 @@ sub new {
 		],
 		conduit => 'pty'
 	);
-
-	return $self;
 }
 
 sub write_startscript {
 	my $self = shift;
 	my $templ = Mojo::Template->new;
+	my $match = $self->match;
+	my $script_ast = $match->{script};
 	my $params = {
-		Game => {
-			HostPort => $self->port,
-			AutohostPort => $self->host_interface->port
-		}
+		StartPosType => 1,
+		NumAllyTeams => '',
+		NumPlayers => '',
+		OnlyLocal => 0,
+		IsHost => 1,
+		GameType => $match->{game},
+		MapName => $match->{map},
+		HostPort => $self->port,
+		AutoHostIP => '127.0.0.1',
+		AutohostPort => $self->host_interface->port
 	};
-	my $output = $templ->render_file('templates/_script.ep.txt', $params);
-	say "here's some script output";
-	say $output;
+
+	for my $group (qw(team player allyteam)) {
+		for my $num (sort keys %{$match->{$group}}) {
+			warn Dumper($match->{$group}->{$num}) . "\n";
+			my $key = "$group$num";
+			$params->{$key} = $match->{$group}->{$num};
+		}
+	}
+
+	return $templ->render_file('templates/_script.ep.txt', $params);
 }
 
 sub cleanup {
@@ -96,11 +109,6 @@ sub cleanup {
 sub force_shutdown {
 	my $self = shift;
 	$self->process->kill;
-}
-
-sub generate_user_password {
-	my @corpus = ('a' .. 'z', 'A' .. 'Z', 0 .. 9, qw|! @ $ % ^ & * ( )|);
-	return join '', (shuffle @corpus)[0 .. 8];
 }
 
 1;
