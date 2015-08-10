@@ -91,7 +91,6 @@ sub write_startscript {
 
 	for my $group (qw(team player allyteam)) {
 		for my $num (sort keys %{$match->{$group}}) {
-			warn Dumper($match->{$group}->{$num}) . "\n";
 			my $key = "$group$num";
 			$params->{$key} = $match->{$group}->{$num};
 		}
