@@ -8,7 +8,7 @@ use 5.18.2;
 
 our @EXPORT_OK = qw(generate_password);
 
-my @corpus = ('a' .. 'z', 'A' .. 'Z', 0 .. 9, qw|! @ $ % ^ & * ( )|);
+my @corpus = ('a' .. 'z', 'A' .. 'Z', 0 .. 9, qw|! $ % ^ & * ( )|);
 sub generate_password {
 	return join '', (shuffle @corpus)[0 .. 8];
 }
