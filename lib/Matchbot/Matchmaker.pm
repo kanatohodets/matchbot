@@ -2,7 +2,7 @@ package Matchbot::Matchmaker;
 use Mojo::Base -strict;
 use Exporter 'import';
 use List::Util qw(shuffle);
-use Matchmaker::Util qw(generate_password);
+use Matchbot::Util qw(generate_password);
 use 5.18.2;
 
 our @EXPORT_OK = qw(find_queue_matches);

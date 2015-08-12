@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Spring::Game;
 use Matchbot::Matchmaker;
+use Matchbot::Util qw(generate_password);
 
 my $match = {
 	map => "Test Map",
@@ -10,11 +11,11 @@ my $match = {
 	player => {
 		0 => {
 			name => "Test Player One",
-			password => Matchbot::Matchmaker::generate_user_password(),
+			password => generate_password,
 		},
 		1 => {
 			name => "Test Player Two",
-			password => Matchbot::Matchmaker::generate_user_password(),
+			password => generate_password,
 		}
 	},
 	team => {
