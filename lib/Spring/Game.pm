@@ -78,8 +78,6 @@ sub write_startscript {
 	my $script_ast = $match->{script};
 	my $params = {
 		StartPosType => 1,
-		NumAllyTeams => '',
-		NumPlayers => '',
 		OnlyLocal => 0,
 		IsHost => 1,
 		GameType => $match->{game},
@@ -89,12 +87,17 @@ sub write_startscript {
 		AutohostPort => $self->host_interface->port
 	};
 
+	my %counts;
 	for my $group (qw(team player allyteam)) {
 		for my $num (sort keys %{$match->{$group}}) {
+			$counts{$group}++;
 			my $key = "$group$num";
 			$params->{$key} = $match->{$group}->{$num};
 		}
 	}
+
+	$params->{NumAllyTeams} = $counts{allyteam};
+	$params->{NumPlayers} = $counts{player};
 
 	return $templ->render_file('templates/_script.ep.txt', $params);
 }
