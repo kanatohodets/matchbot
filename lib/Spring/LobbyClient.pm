@@ -100,8 +100,15 @@ sub open_queue {
 }
 
 sub connect_user {
-	my ($self, $user) = @_;
-	$self->_write('CONNECTUSER', encode_json($user));
+	my ($self, $user, $ip, $port, $engine, $password) = @_;
+	my $details = {
+		userName => $user,
+		ip => $ip,
+		port => "$port",
+		password => $password,
+		engine => $engine
+	};
+	$self->_write('CONNECTUSER', encode_json($details));
 }
 
 sub close_queue {
