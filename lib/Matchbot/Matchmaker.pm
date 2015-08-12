@@ -8,9 +8,9 @@ use 5.18.2;
 our @EXPORT_OK = qw(find_queue_matches);
 
 sub generate_1v1s {
-    my ($players, $map_pool, $game_pool) = @_;
-    my @players = @$players;
-    my @matches;
+	my ($players, $game_pool, $map_pool) = @_;
+	my @players = @$players;
+	my @matches;
 	while (@players) {
 		my ($one, $two) = (shift @players, shift @players);
 		if (defined $one && defined $two) {
@@ -22,29 +22,32 @@ sub generate_1v1s {
 				status => 'readycheck',
 				map => $map,
 				game => $game,
+				playerlist => [$one, $two],
 				player => {
-                    0 => {
-                        name => $one,
-                        password => generate_password(),
-                    },
-                    1 => {
-                        name => $two,
-                        password => generate_password(),
-                    }
-                },
-                team => {
-                    0 => {
-                        AllyTeam => 0,
-                    },
-                    1 => {
-                        AllyTeam => 0,
-                    },
-                },
-                allyteam => { 0 => { NumAllies => 0 }, 1 => { NumAllies => 0 }},
+					0 => {
+						name => $one,
+						password => generate_password(),
+					},
+					1 => {
+						name => $two,
+						password => generate_password(),
+					}
+				},
+				team => {
+					0 => {
+						AllyTeam => 0,
+						TeamLeader => 0,
+					},
+					1 => {
+						AllyTeam => 1,
+						TeamLeader => 1,
+					},
+				},
+				allyteam => { 0 => { NumAllies => 0 }, 1 => { NumAllies => 0 }},
 			};
 		}
-    }
-    return @matches;
+	}
+	return @matches;
 }
 
 sub find_queue_matches {
@@ -52,10 +55,10 @@ sub find_queue_matches {
 	#TODO: smart matching logic, extensibility so its easy to write new
 	#matching algos, whatever.
 	my @players = keys %{$queue->{players}};
-    my $details = $queue->{details};
+	my $details = $queue->{details};
 
-    # just 1v1 for now
-    my @matches = generate_1v1s(\@players, $details->{gameNames}, $details->{mapNames});
+	# just 1v1 for now
+	my @matches = generate_1v1s(\@players, $details->{gameNames}, $details->{mapNames});
 	return @matches;
 }
 

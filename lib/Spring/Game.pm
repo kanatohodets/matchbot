@@ -2,6 +2,7 @@ package Spring::Game;
 use Mojo::Base 'Mojo::EventEmitter';
 use Mojo::Template;
 use Mojo::IOLoop::ReadWriteFork;
+use Mojo::Util qw(spurt);
 
 use IO::Socket::INET;
 use List::Util qw(shuffle);
@@ -10,12 +11,12 @@ use File::Path qw(make_path remove_tree);
 use Spring::AutohostInterface;
 use Data::Dumper qw(Dumper);
 
-has process => sub { state $fork = Mojo::IOLoop::ReadWriteFork->new };
+has process => sub { my $fork = Mojo::IOLoop::ReadWriteFork->new };
 has 'manager';
 has 'match';
 has root_dir => sub { shift->manager->app->config->{root_dir} };
 has spring_binary => sub { shift->manager->app->config->{spring} };
-has host_interface => sub { state $interface = Spring::AutohostInterface->new };
+has host_interface => sub { my $interface = Spring::AutohostInterface->new };
 
 has port => sub {
 	my $self = shift;
@@ -29,44 +30,43 @@ has port => sub {
 	return $port;
 };
 
-has 'dir' => sub {
+has dir => sub {
 	my $self = shift;
 	# HACK (using time). probably best to increment IDs in the code based on
 	# reading dirnames (so it survives restarts without overwriting existing
 	# dirs)
-	return $self->root_dir . "/" . time;
+	my $root = $self->root_dir;
+	my $path = $self->manager->app->home->rel_file("$root/" . time);
+	return $path;
 };
 
 sub start {
 	my $self = shift;
+	make_path $self->dir;
+
 	$self->process->on(error => sub {
 		my ($fork, $err) = @_;
 		my $dir = $self->dir;
-		warn "Spring $dir ERR <<< $err\n";
+		warn "Spring $dir ERR >>> $err\n";
 	});
 	$self->process->on(read => sub {
 		my ($fork, $buffer) = @_;
 		my $dir = $self->dir;
-		warn "Spring $dir <<< $buffer\n";
+		warn "Spring $dir >>> $buffer\n";
 	});
 
 	$self->process->on(close => sub {
 		$self->cleanup;
 	});
 
-	make_path $self->dir;
 
-	$self->write_startscript;
+	my $script_file = $self->write_startscript;
+	die "could not write startscript!" if !$script_file;
 
 	my $match = $self->match;
 	$self->process->start(
 		program => $self->spring_binary,
-		program_args => [
-			'--game' => $match->{game}, 
-			'--map' => $match->{map}, 
-			'--write-dir' => $self->dir,
-			$self->dir . '/_script.txt'
-		],
+		program_args => [ $script_file ],
 		conduit => 'pty'
 	);
 }
@@ -76,12 +76,14 @@ sub write_startscript {
 	my $templ = Mojo::Template->new;
 	my $match = $self->match;
 	my $script_ast = $match->{script};
+	# TODO: something about the script isn't quite right, game doesn't start
 	my $params = {
 		StartPosType => 1,
 		OnlyLocal => 0,
 		IsHost => 1,
 		GameType => $match->{game},
 		MapName => $match->{map},
+		HostIP => '127.0.0.1',
 		HostPort => $self->port,
 		AutoHostIP => '127.0.0.1',
 		AutohostPort => $self->host_interface->port
@@ -99,7 +101,11 @@ sub write_startscript {
 	$params->{NumAllyTeams} = $counts{allyteam};
 	$params->{NumPlayers} = $counts{player};
 
-	return $templ->render_file('templates/_script.ep.txt', $params);
+	my $script = $templ->render_file('templates/_script.ep.txt', $params);
+	my $script_file = $self->dir . '/_script.txt';
+	spurt $script, $script_file;
+
+	return $script_file if -r $script_file;
 }
 
 sub cleanup {

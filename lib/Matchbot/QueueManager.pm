@@ -67,7 +67,7 @@ sub matchmake {
 	say "any games found in matched players? ", Dumper(@matches);
 	if (@matches) {
 		for my $match (@matches) {
-			my $players = $match->{players};
+			my $players = $match->{playerlist};
 			for my $player (@$players) {
 				$queue->{players}->{$player}->{match} = $match;
 			}
@@ -123,23 +123,30 @@ sub handle_ready_check_response {
 		my @players = sort keys %$queue_players;
 
 		if ($all_ready) {
-			#TODO: spawn a game and issue CONNECTUSER
 			$self->app->client->ready_check_result($queue_name, \@players, 'pass');
-			my $game = Spring::Game->new({
-				manager => $self,
-				queue => $queue->{details},
-				match => $match
-			});
-
-			$game->on(start => sub {
-				my ($game, $pid) = @_;
-				$self->games->{$pid} = $game;
-				# username, IP:port, password
-				#$self->app->client->connect_user($player, $address, $player_password);
-			});
+			$self->start_game($match);
 		} else {
 			$self->app->client->ready_check_result($queue_name, \@players, 'fail');
 		}
+	}
+}
+
+sub start_game {
+	my ($self, $match) = @_;
+	my $game = Spring::Game->new({
+		manager => $self,
+		match => $match
+	});
+
+	$game->start;
+
+	# TODO: external IP from app
+	my $ip = '127.0.0.1';
+	my $port = $game->port;
+	my @players = values %{ $match->{player} };
+	for my $player (@players) {
+		my ($name, $password) = @{$player}{qw(name password)};
+		$self->app->client->connect_user($name, $ip, $port, '0', $password);
 	}
 }
 
