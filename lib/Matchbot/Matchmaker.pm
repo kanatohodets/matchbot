@@ -25,10 +25,12 @@ sub generate_1v1s {
 				playerlist => [$one, $two],
 				player => {
 					0 => {
+						team => 0,
 						name => $one,
 						password => generate_password(),
 					},
 					1 => {
+						team => 1,
 						name => $two,
 						password => generate_password(),
 					}

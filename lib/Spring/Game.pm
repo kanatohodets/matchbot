@@ -83,7 +83,7 @@ sub write_startscript {
 		IsHost => 1,
 		GameType => $match->{game},
 		MapName => $match->{map},
-		HostIP => '127.0.0.1',
+		HostIP => '',
 		HostPort => $self->port,
 		AutoHostIP => '127.0.0.1',
 		AutohostPort => $self->host_interface->port
@@ -97,9 +97,6 @@ sub write_startscript {
 			$params->{$key} = $match->{$group}->{$num};
 		}
 	}
-
-	$params->{NumAllyTeams} = $counts{allyteam};
-	$params->{NumPlayers} = $counts{player};
 
 	my $script = $templ->render_file('templates/_script.ep.txt', $params);
 	my $script_file = $self->dir . '/_script.txt';
