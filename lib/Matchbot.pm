@@ -5,7 +5,6 @@ use Matchbot::MockQueues;
 use Matchbot::QueueManager;
 use Mojolicious::Plugin::Config;
 
-has 'queue';
 has client => sub { state $client = Spring::LobbyClient->new() };
 has queue => sub {
 	my $self = shift;
