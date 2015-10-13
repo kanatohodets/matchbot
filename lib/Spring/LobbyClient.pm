@@ -118,17 +118,28 @@ sub close_queue {
 
 sub join_queue_accept {
 	my ($self, $queue, $users) = @_;
-	$self->_write('JOINQUEUEACCEPT', encode_json({ name => $queue, userNames => $users }));
+	$self->_write('JOINQUEUEACCEPT', encode_json({
+		name => $queue,
+		userNames => $users
+	}));
 }
 
 sub ready_check {
 	my ($self, $queue, $users, $response_time) = @_;
-	$self->_write('READYCHECK', encode_json({ name => $queue, userNames => $users, responseTime => 5 }));
+	$self->_write('READYCHECK', encode_json({
+		name => $queue,
+		userNames => $users,
+		responseTime => 5
+	}));
 }
 
 sub ready_check_result {
 	my ($self, $queue, $users, $result) = @_;
-	$self->_write('READYCHECKRESULT', encode_json({ name => $queue, userNames => $users, result => $result }));
+	$self->_write('READYCHECKRESULT', encode_json({
+		name => $queue,
+		userNames => $users,
+		result => $result
+	}));
 }
 
 sub _read {
