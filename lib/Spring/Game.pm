@@ -9,6 +9,8 @@ use List::Util qw(shuffle);
 use File::Path qw(make_path remove_tree);
 
 use Spring::AutohostInterface;
+use Matchbot::Util qw(generate_password);
+
 use Data::Dumper qw(Dumper);
 
 has process => sub { my $fork = Mojo::IOLoop::ReadWriteFork->new };
@@ -39,6 +41,8 @@ has dir => sub {
 	my $path = $self->manager->app->home->rel_file("$root/" . time);
 	return $path;
 };
+
+has 'players';
 
 sub start {
 	my $self = shift;
@@ -75,8 +79,6 @@ sub write_startscript {
 	my $self = shift;
 	my $templ = Mojo::Template->new;
 	my $match = $self->match;
-	my $script_ast = $match->{script};
-	# TODO: something about the script isn't quite right, game doesn't start
 	my $params = {
 		StartPosType => 1,
 		OnlyLocal => 0,
@@ -89,12 +91,40 @@ sub write_startscript {
 		AutohostPort => $self->host_interface->port
 	};
 
+	my $ast = {
+		player => {},
+		team => {},
+		allyteam => {}
+	};
+
+	for my $player_id (sort keys %{$match->{players}}) {
+		my $player = $match->{players}->{$player_id};
+		my $ast_player = $ast->{player}->{$player_id} //= {};
+		$ast->{team} //= {};
+		my $ast_team = $ast->{team}->{$player->{team}} //= {};
+		if (exists $ast_team->{AllyTeam} && $ast_team->{AllyTeam} ne $player->{ally}) {
+			warn "matchmaker produced players on the same team " .
+				 "but with different allyteams. This doesn't make sense.\n";
+		}
+
+		$ast_team->{AllyTeam} = $player->{ally};
+		$ast_team->{TeamLeader} = $player_id;
+
+		$ast_player->{team} = $player->{team};
+		$ast_player->{name} = $player->{name};
+		$ast_player->{password} = generate_password();
+
+		my $ast_ally = $ast->{allyteam}->{$player->{ally}} //= {};
+		$ast_ally->{NumAllies} //= -1;
+		$ast_ally->{NumAllies}++;
+	}
+
 	my %counts;
 	for my $group (qw(team player allyteam)) {
-		for my $num (sort keys %{$match->{$group}}) {
+		for my $num (sort keys %{$ast->{$group}}) {
 			$counts{$group}++;
 			my $key = "$group$num";
-			$params->{$key} = $match->{$group}->{$num};
+			$params->{$key} = $ast->{$group}->{$num};
 		}
 	}
 

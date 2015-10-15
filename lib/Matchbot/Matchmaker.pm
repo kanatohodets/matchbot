@@ -2,7 +2,6 @@ package Matchbot::Matchmaker;
 use Mojo::Base -strict;
 use Exporter 'import';
 use List::Util qw(shuffle);
-use Matchbot::Util qw(generate_password);
 use 5.18.2;
 
 our @EXPORT_OK = qw(find_queue_matches);
@@ -16,36 +15,14 @@ sub generate_1v1s {
 		if (defined $one && defined $two) {
 			my $map = (shuffle @$map_pool)[0];
 			my $game = (shuffle @$game_pool)[0];
-			# TODO: something to translate a more human datastructure into
-			# an AST for the startscript, instead of basically writing it out.
 			push @matches, {
 				status => 'readycheck',
 				map => $map,
 				game => $game,
-				playerlist => [$one, $two],
-				player => {
-					0 => {
-						team => 0,
-						name => $one,
-						password => generate_password(),
-					},
-					1 => {
-						team => 1,
-						name => $two,
-						password => generate_password(),
-					}
+				players => {
+					0 => { name => $one, team => 0, ally => 0 },
+					1 => { name => $two, team => 1, ally => 1 }
 				},
-				team => {
-					0 => {
-						AllyTeam => 0,
-						TeamLeader => 0,
-					},
-					1 => {
-						AllyTeam => 1,
-						TeamLeader => 1,
-					},
-				},
-				allyteam => { 0 => { NumAllies => 0 }, 1 => { NumAllies => 0 }},
 			};
 		}
 	}

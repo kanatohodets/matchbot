@@ -3,6 +3,7 @@ use Mojo::Base 'Mojo::EventEmitter';
 use List::Util qw(all any);
 use Data::Dumper qw(Dumper);
 use Spring::Game;
+use Matchbot::Util qw(generate_password);
 use Matchbot::Matchmaker qw(find_queue_matches);;
 
 use 5.18.2;
@@ -61,17 +62,21 @@ sub add_users_to_queue {
 # see if there are any games to be had
 sub matchmake {
 	my ($self, $queue_name) = @_;
-	say "matchmaking! $queue_name";
 	my $queue = $self->queues->{$queue_name};
 	my @matches = find_queue_matches($queue);
-	say "any games found in matched players? ", Dumper(@matches);
 	if (@matches) {
 		for my $match (@matches) {
-			my $players = $match->{playerlist};
-			for my $player (@$players) {
-				$queue->{players}->{$player}->{match} = $match;
+			my $players = $match->{players};
+			my @player_list;
+			for my $player_id (keys %$players) {
+				my $player_name = $players->{$player_id}->{name};
+				push @player_list, $player_name;
+				# associate match with each player so we can snag the match
+				# details regardless of which player reponds last to the ready
+				# check
+				$queue->{players}->{$player_name}->{match} = $match;
 			}
-			$self->app->client->ready_check($queue_name, $players, 10);
+			$self->app->client->ready_check($queue_name, \@player_list, 10);
 		}
 	}
 }
@@ -126,6 +131,12 @@ sub handle_ready_check_response {
 			$self->app->client->ready_check_result($queue_name, \@players, 'pass');
 			$self->start_game($match);
 		} else {
+			for my $name (@players) {
+				my $player = $queue_players->{$name};
+				delete ${$player}{match};
+				# delete unready/timeout from queue?
+				$player->{status} = 'unknown';
+			}
 			$self->app->client->ready_check_result($queue_name, \@players, 'fail');
 		}
 	}
@@ -143,8 +154,7 @@ sub start_game {
 	# TODO: external IP from app
 	my $ip = '127.0.0.1';
 	my $port = $game->port;
-	my @players = values %{ $match->{player} };
-	for my $player (@players) {
+	for my $player ($game->players) {
 		my ($name, $password) = @{$player}{qw(name password)};
 		$self->app->client->connect_user($name, $ip, $port, '0', $password);
 	}
