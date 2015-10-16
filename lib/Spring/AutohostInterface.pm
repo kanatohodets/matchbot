@@ -51,7 +51,6 @@ sub send {
 
 sub parse_message {
 	my ($self, $message) = @_;
-	say "got a message from spring on autohost interface: $message";
 }
 
 1;
