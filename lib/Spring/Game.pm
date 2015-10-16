@@ -5,7 +5,6 @@ use Mojo::IOLoop::ReadWriteFork;
 use Mojo::Util qw(spurt);
 
 use IO::Socket::INET;
-use List::Util qw(shuffle);
 use File::Path qw(make_path remove_tree);
 
 use Spring::AutohostInterface;
