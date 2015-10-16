@@ -63,7 +63,6 @@ sub start {
 		$self->cleanup;
 	});
 
-
 	my $script_file = $self->write_startscript;
 	die "could not write startscript!" if !$script_file;
 
@@ -97,6 +96,7 @@ sub write_startscript {
 		allyteam => {}
 	};
 
+	my @players;
 	for my $player_id (sort keys %{$match->{players}}) {
 		my $player = $match->{players}->{$player_id};
 		my $ast_player = $ast->{player}->{$player_id} //= {};
@@ -113,11 +113,14 @@ sub write_startscript {
 		$ast_player->{team} = $player->{team};
 		$ast_player->{name} = $player->{name};
 		$ast_player->{password} = generate_password();
+		push @players, $ast_player;
 
 		my $ast_ally = $ast->{allyteam}->{$player->{ally}} //= {};
 		$ast_ally->{NumAllies} //= -1;
 		$ast_ally->{NumAllies}++;
 	}
+
+	$self->players(\@players);
 
 	my %counts;
 	for my $group (qw(team player allyteam)) {

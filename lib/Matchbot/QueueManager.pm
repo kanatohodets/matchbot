@@ -154,7 +154,7 @@ sub start_game {
 	# TODO: external IP from app
 	my $ip = '127.0.0.1';
 	my $port = $game->port;
-	for my $player ($game->players) {
+	for my $player (@{ $game->players }) {
 		my ($name, $password) = @{$player}{qw(name password)};
 		$self->app->client->connect_user($name, $ip, $port, '0', $password);
 	}
