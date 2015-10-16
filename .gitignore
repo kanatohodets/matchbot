@@ -1,3 +1,4 @@
 log*
 *.conf
 games/*
+local/*
