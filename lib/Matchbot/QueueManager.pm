@@ -3,7 +3,6 @@ use Mojo::Base 'Mojo::EventEmitter';
 use List::Util qw(all any);
 use Data::Dumper qw(Dumper);
 use Spring::Game;
-use Matchbot::Util qw(generate_password);
 use Matchbot::Matchmaker qw(find_queue_matches);;
 
 use 5.18.2;
@@ -142,6 +141,11 @@ sub handle_ready_check_response {
 	}
 }
 
+sub register_game {
+	my ($self, $game) = @_;
+	$self->games->{$game->process->pid} = $game;
+}
+
 sub start_game {
 	my ($self, $match) = @_;
 	my $game = Spring::Game->new({
@@ -150,6 +154,8 @@ sub start_game {
 	});
 
 	$game->start;
+
+	$self->register_game($game);
 
 	# TODO: external IP from app
 	my $ip = '127.0.0.1';
