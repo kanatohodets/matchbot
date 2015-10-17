@@ -28,9 +28,33 @@ with data specific to your deployment"):
 		},
 	}
 
+Next, make a `queue.json` file somewhere with your queue details. It should look like
+this (using S44 as an example):
+
+	[
+	   {
+		  "teamJoinAllowed" : true,
+		  "title" : "MOAR S44",
+		  "name" : "S44",
+		  "gameNames" : [
+			 "Spring: 1944 $VERSION"
+		  ],
+		  "maxPlayers" : 30,
+		  "minPlayers" : 10,
+		  "engineVersions" : [
+			 "99"
+		  ],
+		  "mapNames" : [
+			 "1944_Red_Planet"
+		  ],
+		  "description" : "TACTICS"
+	   },
+	   <more queue defs go here>
+	]
+
 ## Running
 
-	carton exec script/matchbot daemon
+	carton exec script/matchbot daemon --queue <path-to-queue.json>
 
-Will start the bot. The (not yet implemented) interface will be available on
-localhost:3000.
+Will start the bot. If your queue.json lives in the same dir as the bot script,
+that argument is not needed.

@@ -1,9 +1,11 @@
 package Matchbot;
 use Mojo::Base 'Mojolicious';
 use Spring::LobbyClient;
-use Matchbot::MockQueues;
 use Matchbot::QueueManager;
 use Mojolicious::Plugin::Config;
+use Getopt::Long;
+use Mojo::JSON qw(decode_json);
+use Mojo::Util qw(slurp);
 
 has client => sub { state $client = Spring::LobbyClient->new() };
 has queue => sub {
@@ -15,15 +17,19 @@ has queue => sub {
 
 sub startup {
 	my $self = shift;
-	my $given_conf = $ARGV[-1] // '';
+	use feature qw(say); use Data::Dumper qw(Dumper);
 	my $conf_file = 'matchbot.conf';
-	$conf_file = $given_conf if $given_conf && -r $given_conf;
+	my $queue_file = 'queue.json';
+
+	GetOptions(	"config=s" => \$conf_file,
+				"queue=s" => \$queue_file );
 
 	$self->plugin(Config => { file => $conf_file });
 
 	my $conn = $self->config->{connection};
+	my $queue_data = slurp $queue_file;
 
-	my $queues = Matchbot::MockQueues::get_queues();
+	my $queues = decode_json($queue_data);
 	$self->client->connect($conn => sub {
 		$self->queue->start;
 		$self->queue->open($queues);
