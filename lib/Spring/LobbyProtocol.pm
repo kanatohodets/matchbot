@@ -12,7 +12,9 @@ sub parse_message {
 	my $commands = {};
 	my @receipt_order;
 	for my $message (@messages) {
-		$message =~ s/^#(\d+) //; my $id = $1 // 'no ID';
+		# capture the message ID (e.g. '#445')
+		$message =~ s/^#(\d+) //;
+		my $id = $1 // 'no ID';
 
 		# first message from server, the banner
 		if ($id eq 'no ID') {
