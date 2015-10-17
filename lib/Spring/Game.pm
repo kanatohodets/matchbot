@@ -83,7 +83,7 @@ sub generate_startscript {
 	my $ast = $self->prepare_startscript_ast($match);
 
 	# TODO: ditch this side-effect
-	my @players = map { $ast->{players}->{$_} } sort keys %{ $ast->{players} };
+	my @players = map { $ast->{player}->{$_} } sort keys %{ $ast->{player} };
 	$self->players(\@players);
 
 	return $self->compile_startscript($match->{game}, $match->{map}, $ast);
