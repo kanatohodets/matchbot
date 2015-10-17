@@ -62,8 +62,11 @@ sub start {
 		$self->cleanup;
 	});
 
-	my $script_file = $self->write_startscript;
-	die "could not write startscript!" if !$script_file;
+	my $script = $self->generate_startscript;
+	my $script_file = $self->dir . '/_script.txt';
+	spurt $script, $script_file;
+
+	die "could not write startscript!" if !-r $script_file;
 
 	my $match = $self->match;
 	$self->process->start(
@@ -73,29 +76,27 @@ sub start {
 	);
 }
 
-sub write_startscript {
+sub generate_startscript {
 	my $self = shift;
-	my $templ = Mojo::Template->new;
 	my $match = $self->match;
-	my $params = {
-		StartPosType => 1,
-		OnlyLocal => 0,
-		IsHost => 1,
-		GameType => $match->{game},
-		MapName => $match->{map},
-		HostIP => '',
-		HostPort => $self->port,
-		AutoHostIP => '127.0.0.1',
-		AutohostPort => $self->host_interface->port
-	};
 
+	my $ast = $self->prepare_startscript_ast($match);
+
+	# TODO: ditch this side-effect
+	my @players = map { $ast->{players}->{$_} } sort keys %{ $ast->{players} };
+	$self->players(\@players);
+
+	return $self->compile_startscript($match->{game}, $match->{map}, $ast);
+}
+
+sub prepare_startscript_ast {
+	my ($self, $match) = @_;
 	my $ast = {
 		player => {},
 		team => {},
 		allyteam => {}
 	};
 
-	my @players;
 	for my $player_id (sort keys %{$match->{players}}) {
 		my $player = $match->{players}->{$player_id};
 		my $ast_player = $ast->{player}->{$player_id} //= {};
@@ -112,14 +113,30 @@ sub write_startscript {
 		$ast_player->{team} = $player->{team};
 		$ast_player->{name} = $player->{name};
 		$ast_player->{password} = generate_password();
-		push @players, $ast_player;
 
 		my $ast_ally = $ast->{allyteam}->{$player->{ally}} //= {};
 		$ast_ally->{NumAllies} //= -1;
 		$ast_ally->{NumAllies}++;
 	}
 
-	$self->players(\@players);
+	return $ast;
+}
+
+sub compile_startscript {
+	my ($self, $game, $map, $ast) = @_;
+	my $templ = Mojo::Template->new;
+
+	my $params = {
+		StartPosType => 1,
+		OnlyLocal => 0,
+		IsHost => 1,
+		GameType => $game,
+		MapName => $map,
+		HostIP => '',
+		HostPort => $self->port,
+		AutoHostIP => '127.0.0.1',
+		AutohostPort => $self->host_interface->port
+	};
 
 	my %counts;
 	for my $group (qw(team player allyteam)) {
@@ -130,11 +147,7 @@ sub write_startscript {
 		}
 	}
 
-	my $script = $templ->render_file('templates/_script.ep.txt', $params);
-	my $script_file = $self->dir . '/_script.txt';
-	spurt $script, $script_file;
-
-	return $script_file if -r $script_file;
+	return $templ->render_file('templates/_script.ep.txt', $params);
 }
 
 sub cleanup {

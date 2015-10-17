@@ -2,31 +2,14 @@ use Test::More;
 use strict;
 use warnings;
 use Spring::Game;
-use Matchbot::Matchmaker;
-use Matchbot::Util qw(generate_password);
 
 my $match = {
 	map => "Test Map",
 	game => "Test Game",
-	player => {
-		0 => {
-			name => "Test Player One",
-			password => generate_password,
-		},
-		1 => {
-			name => "Test Player Two",
-			password => generate_password,
-		}
+	players => {
+		0 => { name => "Test Player One", team => 0, ally => 0 },
+		1 => { name => "Test Player Two", team => 1, ally => 1 }
 	},
-	team => {
-		0 => {
-			AllyTeam => 0,
-		},
-		1 => {
-			AllyTeam => 1,
-		},
-	},
-	allyteam => { 0 => { NumAllies => 0 }, 1 => { NumAllies => 0 }},
 };
 
 my $game = Spring::Game->new({
@@ -35,7 +18,38 @@ my $game = Spring::Game->new({
 	spring_binary => 'foobar does not matter'
 });
 
-my $script = $game->write_startscript;
+my $ast = $game->prepare_startscript_ast($match);
+my $mock_ast = {
+	'player' => {
+		'1' => {
+			'password' => $ast->{player}->{1}->{password},
+			'team' => 1,
+			'name' => 'Test Player Two'
+		},
+		'0' => {
+			'name' => 'Test Player One',
+			'password' => $ast->{player}->{0}->{password},
+			'team' => 0
+		}
+	},
+	'allyteam' => {
+		'0' => { 'NumAllies' => 0 },
+		'1' => { 'NumAllies' => 0 },
+	},
+	'team' => {
+		'1' => {
+			'TeamLeader' => '1',
+			'AllyTeam' => 1
+		},
+		'0' => {
+			'AllyTeam' => 0,
+			'TeamLeader' => '0'
+		}
+	}
+};
+is_deeply $ast, $mock_ast, "right AST generated";
+
+my $script = $game->generate_startscript;
 
 like $script, qr/^\[game\]\s*{/, "starts with [game]";
 like $script, qr/AutohostPort=\d+;/, "has autohost port";
