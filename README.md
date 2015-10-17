@@ -14,7 +14,7 @@ Matchbot is a Perl daemon with a few dependencies, and it uses
 
 ## Configuration
 
-Create a matchbot.conf file with contents like so (where <STUFF> means "fill in
+Create a matchbot.conf file with contents like so (where `<STUFF>` means "fill in
 with data specific to your deployment"):
 
 	{
