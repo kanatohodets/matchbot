@@ -2,3 +2,4 @@ log*
 *.conf
 games/*
 local/*
+queue.json
