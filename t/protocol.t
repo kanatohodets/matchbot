@@ -18,5 +18,10 @@ my @parsed = parse_message($incoming_pong);
 my $pong = $parsed[0];
 is_deeply $pong, { 0 => { 'name' => 'PONG', data => [ '' ], } }, 'pong parse';
 
+my $incoming_motd = "#0 MOTD Server's uptime is 24 second(s)";
+my @parsed_motd = parse_message($incoming_motd);
+my $motd = $parsed_motd[0];
+is_deeply $motd, { 0 => { 'name' => 'MOTD', data => [ "Server's uptime is 24 second(s)" ], } }, 'motd parse';
+
 done_testing;
 
