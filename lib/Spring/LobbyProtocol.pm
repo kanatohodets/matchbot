@@ -84,3 +84,21 @@ sub prepare_message {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Spring::LobbyProtocol - parser/compiler for the SpringRTS lobby protocol
+
+=head1 SYNOPSIS
+
+	use Spring::LobbyProtocol qw(parse_message prepare_message)
+	my @parsed = parse_message("#55 PONG");
+	# --> [ { 55 => { 'name' => 'PONG', data => [ '' ] } } ]
+	
+	my @login = ('LOGIN', 0, 'FooUser', 'passw0rd', '3200', '*', 'Matchbot', 0, 'sp cl p');
+	my $new_message = prepare_message(@login);
+	# -->  "#0 LOGIN FooUser password 3200 * Matchbot 0\tsp cl p\n"
+
+=cut

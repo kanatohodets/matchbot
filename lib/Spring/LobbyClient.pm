@@ -185,3 +185,27 @@ sub _ping {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Spring::LobbyClient - a simple SpringRTS lobby client
+
+=head1 SYNOPSIS
+
+	use Spring::LobbyClient;
+	my $client = Spring::LobbyClient->new;
+
+	my $conn = {
+		address => 'springrts.com',
+		port => 8200,
+		username => 'Foobot',
+		password => 'passw0rd'
+	};
+
+	$client->connect($conn => sub {
+		$client->open_queue($my_cool_queue);
+	});
+
+=cut

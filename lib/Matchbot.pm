@@ -37,3 +37,15 @@ sub startup {
 }
 
 1;
+=encoding utf8
+
+=head1 NAME
+
+Matchbot - a matchmaking bot for SpringRTS servers
+
+=head1 SYNOPSIS
+
+	carton exec script/matchbot daemon --queue <path-to-queue.json>
+
+=cut
+
