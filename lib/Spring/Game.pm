@@ -13,10 +13,9 @@ use Matchbot::Util qw(generate_password);
 use Data::Dumper qw(Dumper);
 
 has process => sub { my $fork = Mojo::IOLoop::ReadWriteFork->new };
-has 'manager';
 has 'match';
-has root_dir => sub { shift->manager->app->config->{root_dir} };
-has spring_binary => sub { shift->manager->app->config->{spring} };
+has 'root_dir';
+has 'spring_binary';
 has host_interface => sub { my $interface = Spring::AutohostInterface->new };
 
 has port => sub {
@@ -36,8 +35,7 @@ has dir => sub {
 	# HACK (using time). probably best to increment IDs in the code based on
 	# reading dirnames (so it survives restarts without overwriting existing
 	# dirs)
-	my $root = $self->root_dir;
-	my $path = $self->manager->app->home->rel_file("$root/" . time);
+	my $path = sprintf "%s/%s", $self->root_dir, time;
 	return $path;
 };
 
@@ -162,3 +160,23 @@ sub force_shutdown {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Spring::Game - start Spring host (by writing startscripts)
+
+=head1 SYNOPSIS
+
+	use Spring::Game;
+
+	my $game = Spring::Game->new({
+		root_dir => $path_to_directory_for_startscripts,
+		spring_binary => $path_to_spring_dedicated,
+		match => $match
+	});
+
+	$game->start;
+
+=cut

@@ -149,7 +149,8 @@ sub register_game {
 sub start_game {
 	my ($self, $match) = @_;
 	my $game = Spring::Game->new({
-		manager => $self,
+		root_dir => $self->app->config->{root_dir},
+		spring_binary => $self->app->config->{spring},
 		match => $match
 	});
 
