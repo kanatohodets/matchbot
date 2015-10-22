@@ -54,3 +54,35 @@ sub parse_message {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Spring::AutohostInterface - interact with the Spring AH interface
+
+=head1 SYNOPSIS
+
+	use Spring::AutohostInterface;
+
+	my $interface = Spring::AutohostInterface->new;
+
+=head1 DESCRIPTION
+
+This listens on the port of the newly created Spring::Game process and sends/receives packets to the Spring AutohostInterface. 
+
+=head1 TODO
+
+=over
+
+=item * 
+
+emit data events
+
+=item *
+
+provide send interface
+
+=back
+
+=cut
